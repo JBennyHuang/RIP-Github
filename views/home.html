@@ -1,0 +1,60 @@
+<html>
+    <head>
+        <title>Sync Hub</title>
+        <link rel="stylesheet" href="css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="/stylesheets/style.css">
+
+        <script language="javascript" src="js/bootstrap.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var socket = io();
+            
+            document.onload = function() {
+
+            };
+
+            function send() {
+                var text = document.getElementById("mainTextBox").value
+                socket.emit('text update', text) // emit's first parameter must match the listener
+            }
+
+            socket.on('text update', function(text) {
+                textarea = document.getElementById("mainTextBox");
+                textarea.value = text;
+                resize(textarea)
+            });
+
+            function resize(element) {
+                element.style.height = "5px";
+                element.style.height = element.scrollHeight + 5 + "px";
+                element.style.resize = "none";
+            }
+        </script>
+    </head>
+    <body>
+        <nav class="navbar navbar-dark bg-primary navbar-expand-sm">
+            <a class="navbar-brand" href="">
+                <img src="/Resources/github-logo.png" width="30" height="30" class="d-inline-block align-top">
+                SyncHub
+            </a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">File</a>
+                </li>
+                <li class="nav-item">
+                        <a class="nav-link" href="#">Edit</a>
+                </li>
+                <li class="nav-item">
+                        <a class="nav-link" href="#">Preferences</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Terminal</a>
+                </li>
+            </ul>
+        </nav>
+        <div class="form-group purple-border">
+            <textarea id="mainTextBox" class="form-control" oninput="send(); resize(this);" placeholder="Write something here...">
+            </textarea>
+        </div>
+    </body>
+</html>
