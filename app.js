@@ -1,22 +1,28 @@
 var express = require('express');
 
-var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var app     = express();
+var router  = express.Router();
 
-var receive = require('./io');
+var server  = require('http').createServer(app);
+var io      = require('socket.io').listen(server);
+var socket  = require('./socket');
 
-app.use(express.static("public"));
+app.use(express.static(__dirname + "/Public"));
 app.use(express.static(__dirname + "/node_modules/bootstrap/dist"));
+app.use(express.static(__dirname + "/node_modules/angular"));
 
-app.get("/", function(req,res){
-    res.sendFile(__dirname + '/views/home.html');
+app.get("/", function(req, res) {
+    res.sendFile(__dirname + '/views/dashboard.html');
 });
 
-receive.receiver(io);
-receive.sender(io);
+app.get("/Benny/project.txt", function(req, res) {
+    res.sendFile(__dirname + '/views/file.html');
+});
 
-http.listen(3000 , function(){
+//room
+socket.createRoomListener(app, express, io);
+socket.addRouteListener(app, express, io);
+
+server.listen(3000 , function() {
     console.log("Server has started!");
 });
-

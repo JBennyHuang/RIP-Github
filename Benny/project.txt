@@ -1,0 +1,11 @@
+   <form>
+            <div class="form-group primary-border">
+                <!--new class name for form control-->
+                <div class="form-control" onkeydown="insertTextBox(event)" oninput = "sendData(this)" >
+                    <textarea class="text-box" oninput="resize(this)">
+                    </textarea> <div
+                </div> hello yutong ca va bien ASFVFadsgds
+wat sup 
+            </div>
+        </form>mon penis est dure 
+on

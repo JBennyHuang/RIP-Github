@@ -1,0 +1,200 @@
+<html>
+    <head>
+        <title>Sync Hub</title>
+        <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="/Stylesheets/style.css">
+
+        <script src="/js/bootstrap.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/angular.js"></script>
+        <script>
+
+        </script>
+    </head>
+    <body>
+        <nav class="navbar navbar-dark bg-primary navbar-expand-sm">
+            <a class="navbar-brand" href="">
+                <img src="/Resources/github-logo.png" width="30" height="30" class="d-inline-block align-top">
+                SyncHub
+            </a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">File</a>
+                </li>
+                <li class="nav-item">
+                        <a class="nav-link" href="#">Edit</a>
+                </li>
+                <li class="nav-item">
+                        <a class="nav-link" href="#">Preferences</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Terminal</a>
+                </li>
+            </ul>
+        </nav>
+        
+        <div id="user-status" ng-app="user-status" ng-controller="user-status-controller">
+            <ul class="list-group">
+                <li class="list-group-item" ng-repeat="user in users">
+                    {{user}}
+                </li>
+            </ul>
+        </div>
+
+        <script>
+            var app = angular.module("user-status", []);
+            app.controller("user-status-controller", function($scope) {
+                $scope.users = [];
+            });
+        </script>
+
+        <form class="text-editor">
+            <div class="form-group primary-border" onkeydown="insertTextBox(event)">
+                <div id='phantom'></div>
+                <textarea id="temp" class="form-control" rows="3" oninput="update_text(this)">
+                </textarea>
+            </div>
+        </form>
+        <script src='/scripts/textbox_controller.js'></script>
+        <script>
+            var socket = io();
+            var room_id = window.location.pathname; 
+    
+            resize = function(element) {
+                element.style.height = 'auto';
+                element.style.height = element.scrollHeight + 'px';
+            }
+            
+            // change needed
+            update_text = function(element) {
+                socket.emit('text update', room_id, element.value, someInput.selectionStart);
+                socket.emit('caret update', room_id, someInput.selectionStart);
+                resize(element);
+            }
+    
+            poupulate_text_box = function(element, text, pos) {
+                if (element == document.activeElement) {
+                    var position = element.selectionStart;
+                    var last_len = element.value.length;
+    
+                    element.value = text ;
+                    
+                    var next_len = element.value.length;
+    
+                    element.selectionStart = element.selectionEnd = pos > position ? position : position + (next_len - last_len);
+                } else {
+                    element.value = text
+                }
+                resize(element);
+            }
+    
+            socket.on('text update', function(text, pos) {
+                var textarea = document.getElementById('temp');
+                
+                poupulate_text_box(textarea, text, pos)
+
+                if (pos != - 1)
+                    socket.emit('caret update', room_id, textarea.selectionStart);
+            });
+            
+            // WIP
+            socket.on('load_file', function(content) {
+                for (var i = 0; i < content.length; i ++) {
+                    var element = document.getElementById(content[i].element_id);
+                    var text    = content[i].text
+                }
+            });
+    
+            create_caret = function(id) {
+                var caret = document.createElement('div');
+                caret.id = id;
+                caret.style.position = 'absolute';
+                caret.style.height = '18px';
+                caret.style.width = '1px';
+                caret.style.backgroundColor = 'red';
+                document.body.append(caret)
+            }
+    
+            socket.on('join_room', function(users) {
+                var scope = angular.element(document.getElementById('user-status')).scope();
+                scope.$apply(function() {
+                    scope.users = [];
+                    for (var i = 0; i < users.length; i ++) {
+                        scope.users.push(users[i]);
+                    }
+                });
+    
+                for (var i = 0; i < users.length; i ++) {
+                    var caret = document.getElementById(users[i]);
+                    if (!caret) {
+                        create_caret(users[i])
+                    }
+                }
+            });
+
+            var someInput = document.getElementById("temp"),
+                phantom = document.getElementById("phantom")
+
+            socket.on('caret update', function(start, id) {
+                refresh_content(someInput.value);
+
+                var copy_style = getComputedStyle(temp)
+                for (const property of copy_style)
+                {
+                    phantom.style[property] = copy_style[property];
+                }
+
+                var coords = someInput.getCurrentCoordinates(start);
+                phantom.style.display = 'none';
+
+                var caret = document.getElementById(id);
+                caret.style.top = coords.top;
+                caret.style.left = coords.left;
+            });
+    
+            someInput.getCurrentCoordinates = function(start){
+                var index = start,
+                    inputRect = this.getBoundingClientRect();
+                    charRect = phantom.children[index].getBoundingClientRect();
+                return {
+                    top:charRect.top,
+                    left:charRect.left,
+                    relTop:charRect.top - inputRect.top,
+                    relLeft:charRect.left - inputRect.left,
+                    width:charRect.width
+                };
+            };
+    
+            someInput.addEventListener("keyup",function(e){
+                socket.emit('caret update', room_id, this.selectionStart);
+            });
+
+            someInput.addEventListener("keydown", function(e){
+                socket.emit('caret update', room_id, this.selectionStart);
+            });
+
+            someInput.addEventListener('click', function(e) {
+                socket.emit('caret update', room_id, this.selectionStart);
+            });
+
+            function remove_children(node){
+                while(node.hasChildNodes()){
+                    node.removeChild(node.lastChild);
+                }
+            }
+
+            function refresh_content(text){
+                remove_children(phantom);
+                
+                var span = document.createElement('span');
+                for (const character of (text + '.').split("")) {
+                    span.textContent = character;
+                    phantom.appendChild(span.cloneNode(true))
+                }
+                span.remove();
+            }
+
+            socket.emit("join room", room_id);
+        </script>
+    </body>
+</html>
