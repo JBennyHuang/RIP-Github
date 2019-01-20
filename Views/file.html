@@ -45,19 +45,31 @@
 	
 		<div id="text-editor">
 			
-			<div id="1" onmousedown = "mouse_click(event)" onkeydown="keydown_pressed(event)" contenteditable="true" class="line"></div>
+			<div id="1" onmousedown = "mouse_click(event)" onkeydown="keydown_pressed(event)" contenteditable="true" class="line"><span class = "word" id="w1"></span></div>
 			
-		</div>
+        </div>
 
         <script src='/scripts/textbox_controller.js'></script>
         <script>
             var socket = io();
             var room_id = window.location.pathname; 
+            
+            class Line{
+
+                constructor(line,current_word_index){
+                    this.line = line;
+                    this.current_word_index = current_word_index;
+                }
+
+            }
+            
 			var text_editor = document.getElementById("text-editor");
 			var currentLine = 1;
 			var lines = [];
-			lines.push(document.getElementById("1"))
-			
+           
+			lines.push(new Line(document.getElementById("1"),1));
+
+            
 			function setCursorToEnd(ele){
 				var range = document.createRange();
 				var sel = window.getSelection();
@@ -67,28 +79,34 @@
 				sel.addRange(range);
 				ele.focus();
 			}
-				
+			
 			function keydown_pressed(e){
+                console.log(e.keyCode);
 				if(e.keyCode == 13){
 					
 					
 					var line = document.createElement("DIV");
 					currentLine++;
-					console.log(currentLine);
+					//console.log(currentLine);
 					line.addEventListener("keydown",keydown_pressed);
 					line.addEventListener("mousedown",mouse_click);
 					line.setAttribute("class","line");
 					line.setAttribute("contenteditable","true");
 					line.id=(currentLine.toString());
+
+                    var word = document.createElement("SPAN");
+                    word.setAttribute("id","w1");
+                    word.setAttribute("class","word");
+                    line.appendChild(word);
 					
 					if(lines[currentLine-1] != null){
-						lines.splice(currentLine-1,0,line);
-						console.log(lines[currentLine-1].textContent);
+						//console.log(lines[currentLine-1].textContent);
 						text_editor.insertBefore(line,text_editor.childNodes[currentLine+1]);
+                        lines.splice(currentLine-1,0,new Line(line,1));
 					}
 					else{
-						lines.push(line);
 						text_editor.appendChild(line);
+                        lines.push(new Line(line,1));
 					}
 					
 					line.focus();
@@ -96,37 +114,91 @@
 					
 				}
 				else if(e.keyCode == 8){
-					var line = lines[currentLine-1];
+                    
+					var line = lines[currentLine-1].line;
 			
 					if(line.textContent == "" && currentLine != 1){
 						currentLine--;
-						lines[currentLine-1].focus();
+						lines[currentLine-1].line.focus();
 						line.remove();
 						lines.splice(currentLine,1);
 						
-						setCursorToEnd(lines[currentLine-1]);
-						console.log(currentLine);
+						setCursorToEnd(lines[currentLine-1].line);
+						//console.log(currentLine);
 						decrementAllLines(lines,currentLine);
 						
 						e.preventDefault();
 					}
+                    
 				}
+                else if(e.keyCode == 32){
+                    var line = lines[currentLine-1];
+                    
+                    line.current_word_index++;
+
+                    var word = document.createElement("SPAN");
+
+                    word.setAttribute("id","w"+(line.current_word_index).toString());
+                    word.setAttribute("class","word");
+                    word.textContent = " ";
+                    line.line.appendChild(word);
+                    
+                    e.preventDefault();
+                    //console.log(line.current_word_index);
+               
+                }
+                else{
+                    
+                    var line = lines[currentLine-1].line;
+                    var word = lines[currentLine-1].current_word_index-1;
+                 
+                    if(line.getElementsByClassName("word")[word].textContent == null){
+                        line.getElementsByClassName("word")[word].textContent = String.fromCharCode(e.keyCode);
+                    }
+                    else{
+                        line.getElementsByClassName("word")[word].textContent += String.fromCharCode(e.keyCode);
+                    }
+                    setEndOfContenteditable(line);
+                    e.preventDefault();
+                }
 				
 			}
 			
+            function setEndOfContenteditable(contentEditableElement){
+                var range,selection;
+                if(document.createRange)//Firefox, Chrome, Opera, Safari, IE 9+
+                {
+                    range = document.createRange();//Create a range (a range is a like the selection but invisible)
+                    range.selectNodeContents(contentEditableElement);//Select the entire contents of the element with the range
+                    range.collapse(false);//collapse the range to the end point. false means collapse to end rather than the start
+                    selection = window.getSelection();//get the selection object (allows you to change selection)
+                    selection.removeAllRanges();//remove any selections already made
+                    selection.addRange(range);//make the range you have just created the visible selection
+                }
+                else if(document.selection)//IE 8 and lower
+                { 
+                    range = document.body.createTextRange();//Create a range (a range is a like the selection but invisible)
+                    range.moveToElementText(contentEditableElement);//Select the entire contents of the element with the range
+                    range.collapse(false);//collapse the range to the end point. false means collapse to end rather than the start
+                    range.select();//Select the range (make it the visible selection
+                }
+            }
+            
 			function decrementAllLines(lines_array, start){
 				for(var i = start; i < lines_array.length; i++){
 				
-					lines_array[i].id = lines_array[i].id - 1;
+					lines_array[i].line.id = lines_array[i].line.id - 1;
 				
 				}
 			}
 			
 			function mouse_click(e){
 				currentLine=parseInt(e.target.id);
-				console.log(currentLine);
+				//console.log(currentLine);
 			}
-				
+            
+			
+          
             resize = function(element) {
                 element.style.height = 'auto';
                 element.style.height = element.scrollHeight + 'px';

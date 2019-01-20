@@ -12,6 +12,7 @@
             function addRoute() {
                 var route = document.getElementById('route').value;
                 var file = document.getElementById('file').value;
+                
 
                 socket.emit("add route", route, file)
             };

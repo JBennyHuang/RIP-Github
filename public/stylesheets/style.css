@@ -13,6 +13,20 @@
     caret-color: transparent;
 }
 
+[contenteditable="true"].line {
+    white-space: nowrap;
+    width:100%;
+    overflow: i;
+} 
+[contenteditable="true"].line br {
+    display:none;
+
+}
+[contenteditable="true"].line * {
+    display:inline;
+    white-space:nowrap;
+}
+
 .form-control .primary-border :focus-within {
     border: 1px solid #007bff;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
