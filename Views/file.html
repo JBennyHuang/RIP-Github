@@ -157,17 +157,17 @@
 
 					var line = lines[currentLine-1];
 					
-					line.current_word_index++;
+					lines[currentLine-1].current_word_index++;
 
 					var word = document.createElement("SPAN");
 
 					word.setAttribute("id","w"+(line.current_word_index).toString());
 					word.setAttribute("class","word");
-					word.textContent = " ";
+					word.innerHTML = "&nbsp;";
 					line.line.appendChild(word);
 					
 					//console.log("set location");
-					setToCurrentLocation(line.line.getElementsByClassName("word")[line.current_word_index-1].childNodes[0], pos);
+					setToCurrentLocation(line.line.getElementsByClassName("word")[lines[currentLine-1].current_word_index-1].childNodes[0], pos);
 					pos++;
 					e.preventDefault();
 					
