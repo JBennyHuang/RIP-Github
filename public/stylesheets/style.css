@@ -13,6 +13,7 @@
     caret-color: transparent;
 }
 
+
 [contenteditable="true"].line {
     white-space: nowrap;
     width:100%;

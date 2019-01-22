@@ -54,6 +54,11 @@
 			var socket = io();
 			var room_id = window.location.pathname; 
 			
+			/**
+			Create line class 
+			It contains line - object holding the line div tag
+			Current word index - current word for this line
+			*/
 			class Line{
 
 				constructor(line,current_word_index){
@@ -84,17 +89,22 @@
 			
 			function keydown_pressed(e){
 				console.log(e.keyCode);
+
+				
+
 				if(e.keyCode == 13){
-					
+					pos = 1;
 					var line = document.createElement("DIV");
 					currentLine++;
 					//console.log(currentLine);
 					line.addEventListener("keydown",keydown_pressed);
-					line.addEventListener("mousedown",mouse_click);
+					//line.addEventListener("mousedown",mouse_click);
 					line.setAttribute("class","line");
+					line.setAttribute("onmouseup","mouse_click(event)");
+				
 					line.setAttribute("contenteditable","true");
 					line.id=(currentLine.toString());
-
+					
 					var word = document.createElement("SPAN");
 					word.setAttribute("id","w1");
 					word.setAttribute("class","word");
@@ -109,7 +119,7 @@
 						text_editor.appendChild(line);
 						lines.push(new Line(line,1));
 					}
-					
+					pos = 1;
 					line.focus();
 					
 					
@@ -119,22 +129,23 @@
 					var line = lines[currentLine-1].line;
 			
 					if(line.textContent == "" && currentLine != 1){
+
 						currentLine--;
 						lines[currentLine-1].line.focus();
 						line.remove();
 						lines.splice(currentLine,1);
 						
 						setCursorToEnd(lines[currentLine-1].line);
-						console.log("hey");
+						//console.log("hey");
 						decrementAllLines(lines,currentLine);
 						
 						e.preventDefault();
 					}
 
-					console.log("text content: "+line.getElementsByClassName("word")[lines[currentLine-1].current_word_index-1].textContent.trim());
+					//console.log("text content: "+line.getElementsByClassName("word")[lines[currentLine-1].current_word_index-1].textContent.trim());
 					
 					if(line.getElementsByClassName("word")[lines[currentLine-1].current_word_index-1].textContent.trim() === ""){
-						console.log("hello");
+						
 						decrementAllWords(lines[currentLine-1].current_word_index,line.getElementsByClassName("word"));
 						lines[currentLine-1].current_word_index--;
 					}
@@ -155,25 +166,46 @@
 					word.textContent = " ";
 					line.line.appendChild(word);
 					
-					console.log("set location");
+					//console.log("set location");
 					setToCurrentLocation(line.line.getElementsByClassName("word")[line.current_word_index-1].childNodes[0], pos);
 					pos++;
 					e.preventDefault();
-					//console.log(line.current_word_index);
-			   
+					
 				}
 				else{
-					console.log("current word index= "+lines[currentLine-1].current_word_index-1);
+					
 					var line = lines[currentLine-1].line;
 					var word = lines[currentLine-1].current_word_index-1;
 					
+					var letter;
+
+					if(e.shiftKey){
+						letter = String.fromCharCode(e.keyCode);
+					}
+					else{
+						letter = String.fromCharCode(e.keyCode).toLowerCase();
+					}
+
+					console.log("current line: "+currentLine);
+
 					if(line.getElementsByClassName("word")[word].textContent == null){
-						line.getElementsByClassName("word")[word].textContent = String.fromCharCode(e.keyCode);
+						line.getElementsByClassName("word")[word].textContent = letter;
+						pos = 1;
 					
+					}
+					else if(line.getElementsByClassName("word")[word].textContent.trim() === ""){
+						lines[currentLine-1].current_word_index++;
+						var wordSpan = document.createElement("SPAN");
+						word++;
+						pos = 1;
+						wordSpan.setAttribute("id","w"+(lines[currentLine-1].current_word_index).toString());
+						wordSpan.setAttribute("class","word");
+						wordSpan.textContent = letter;
+						line.appendChild(wordSpan);
 					}
 					else{
 						var text = line.getElementsByClassName("word")[word].textContent;
-						line.getElementsByClassName("word")[word].textContent = text.substring(0,pos) + String.fromCharCode(e.keyCode)+text.substring(pos,text.length);
+						line.getElementsByClassName("word")[word].textContent = text.substring(0,pos-1) + letter +text.substring(pos-1,text.length);
 					
 					}
 					
@@ -186,7 +218,9 @@
 				}
 				
 			}
+		
 			
+
 			function decrementAllWords(start,word_list){
 				
 				for(var i = start; i <word_list.length; i++){
@@ -218,17 +252,35 @@
 					currentLine=parseInt(e.target.parentElement.id);
 					
 					pos = window.getSelection().anchorOffset+1;
-					lines[currentLine-1].current_word_index = findCurrentIndex(window.getSelection().anchorNode)+1;
-					console.log(lines[currentLine-1].current_word_index);
+					lines[currentLine-1].current_word_index = parseInt(e.target.id.substring(1,e.target.id.length));
+					console.log("Current word index: "+e.target.id);
+					console.log("pos: "+pos);
+					console.log("windowanchornode: "+window.getSelection().focusNode.nodeValue);
+					console.log(e.target);
 
 				}
 				else{
 					currentLine=parseInt(e.target.id);
-					
+					lines[currentLine-1].current_word_index = lines[currentLine-1].line.getElementsByClassName("word").length;
+					console.log(lines[currentLine-1].line.getElementsByClassName("word").length);
+					pos = window.getSelection().anchorOffset+1;
+					console.log(pos);
 				}
 				
 				
 
+			}
+
+			function clearSelection() {
+				if (window.getSelection) {
+					if (window.getSelection().empty) { 
+						window.getSelection().empty();
+					} else if (window.getSelection().removeAllRanges) {
+						window.getSelection().removeAllRanges();
+					}
+				} else if (document.selection) { 
+					document.selection.empty();
+				}
 			}
 			
 			function findCurrentIndex(word){
