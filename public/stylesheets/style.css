@@ -1,31 +1,15 @@
 .form-control {
     width: 95%;
-    
+    height: unset;
+
     margin-top: 2.5%;
     margin-left: 2.5%;
 
-    font-family: monospace;
-
-    resize: none;
-
-    overflow: hidden;
-
-    caret-color: transparent;
+    padding: 0;
 }
 
-
-[contenteditable="true"].line {
-    white-space: nowrap;
-    width:100%;
-    overflow: i;
-} 
-[contenteditable="true"].line br {
-    display:none;
-
-}
-[contenteditable="true"].line * {
-    display:inline;
-    white-space:nowrap;
+.CodeMirror {
+    height: auto;
 }
 
 .form-control .primary-border :focus-within {
